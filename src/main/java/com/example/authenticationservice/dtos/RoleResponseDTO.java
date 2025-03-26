@@ -9,8 +9,9 @@ import java.util.List;
 
 @Getter
 @Setter
-public class PutRoleRequestDTO {
+public class RoleResponseDTO {
     private long id;
     @JsonProperty("roleList")
     private List<Role> roles;
+    private String responseMessage;
 }

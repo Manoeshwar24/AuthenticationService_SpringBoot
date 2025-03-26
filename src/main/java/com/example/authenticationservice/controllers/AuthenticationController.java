@@ -1,13 +1,19 @@
 package com.example.authenticationservice.controllers;
 
-import com.example.authenticationservice.dtos.GetLoginRequestDTO;
-import com.example.authenticationservice.dtos.GetLoginResponseDTO;
-import com.example.authenticationservice.dtos.GetSignUpRequestDTO;
-import com.example.authenticationservice.dtos.GetSignUpResponseDTO;
-import com.example.authenticationservice.exceptions.UserCannotBeRegisteredException;
+import com.example.authenticationservice.dtos.LoginRequestDTO;
+import com.example.authenticationservice.dtos.LoginResponseDTO;
+import com.example.authenticationservice.dtos.SignUpRequestDTO;
+import com.example.authenticationservice.dtos.SignUpResponseDTO;
+import com.example.authenticationservice.exceptions.UserAlreadyExistsException;
+import com.example.authenticationservice.exceptions.UserDoesNotExistException;
+import com.example.authenticationservice.exceptions.WrongPasswordException;
 import com.example.authenticationservice.models.User;
 import com.example.authenticationservice.services.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+
 
 @RestController()
 @RequestMapping("/auth")
@@ -17,23 +23,35 @@ public class AuthenticationController {
     public AuthenticationController(UserService userService) {
         this.userService = userService;
     }
-    @GetMapping("/signup")
-    public GetSignUpResponseDTO signUp(@RequestBody GetSignUpRequestDTO getSignUpRequestDTO){
+    @PostMapping("/sign_up")
+    public ResponseEntity<SignUpResponseDTO> signUp(@RequestBody SignUpRequestDTO signUpRequestDTO) throws UserAlreadyExistsException {
         //create User object from the request DTO
-        User toBeCreatedUser = getSignUpRequestDTO.toUser();
-        //call UserService with created user object
-        User createdUser = userService.signUpUser(toBeCreatedUser);
-        //create responseDTO with the result of the UserService
-        GetSignUpResponseDTO getSignUpResponseDTO = new GetSignUpResponseDTO();
-        getSignUpResponseDTO.fromUser(createdUser);
-        getSignUpResponseDTO.setResponseMessage("User successfully registered!");
+        User toBeCreatedUser = signUpRequestDTO.toUser();
 
-        return getSignUpResponseDTO;
+        //create responseDTO with the result of the UserService
+        SignUpResponseDTO signUpResponseDTO = new SignUpResponseDTO();
+        //call UserService with created user object
+        if(userService.signUpUser(toBeCreatedUser)) {
+            signUpResponseDTO.fromUser(toBeCreatedUser);
+            signUpResponseDTO.setResponseMessage("User successfully registered!");
+        }
+
+        return new ResponseEntity<>(signUpResponseDTO, HttpStatus.CREATED);
     }
 
-    @GetMapping
-    public GetLoginResponseDTO login(@RequestBody GetLoginRequestDTO getLoginRequestDTO){
+    @PostMapping("login")
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO)
+    throws UserDoesNotExistException, WrongPasswordException {
+        //create User object from the request DTO
+        User userToLogin = loginRequestDTO.toUser();
+        //call the service to try and login
+        String jwtToken = userService.loginUser(userToLogin);
 
-        return null;
+        //response DTO
+        LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+        loginResponseDTO.setToken(jwtToken);
+        loginResponseDTO.setResponseMessage("User successfully logged in!");
+
+        return new ResponseEntity<>(loginResponseDTO, HttpStatus.OK);
     }
 }

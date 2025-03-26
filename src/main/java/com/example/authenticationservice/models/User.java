@@ -5,6 +5,7 @@ import jakarta.persistence.ManyToMany;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -14,9 +15,8 @@ public class User extends BaseModel {
     private String first_name;
     private String last_name;
     private String email;
-    private String phoneNumber;
     private String password; //encrypted
 
     @ManyToMany
-    private List<Role> roles;
+    private List<Role> roles = new ArrayList<>();
 }

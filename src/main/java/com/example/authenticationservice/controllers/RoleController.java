@@ -1,7 +1,7 @@
 package com.example.authenticationservice.controllers;
 
-import com.example.authenticationservice.dtos.PutRoleRequestDTO;
-import com.example.authenticationservice.dtos.PutRoleResponseDTO;
+import com.example.authenticationservice.dtos.RoleRequestDTO;
+import com.example.authenticationservice.dtos.RoleResponseDTO;
 import com.example.authenticationservice.services.RoleService;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,7 +14,7 @@ public class RoleController {
     }
 
     @PutMapping("/{id}")
-    public PutRoleResponseDTO updateRoleForUser(@PathVariable long id, @RequestBody PutRoleRequestDTO putRoleRequestDTO){
+    public RoleResponseDTO updateRoleForUser(@PathVariable long id, @RequestBody RoleRequestDTO roleRequestDTO){
 
         return null;
     }

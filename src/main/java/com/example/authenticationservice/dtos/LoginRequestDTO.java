@@ -6,20 +6,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GetSignUpRequestDTO {
-    private String first_name;
-    private String last_name;
+public class LoginRequestDTO {
     private String email;
-    private String phone;
-    private String password; //how to get it from User? (encrypted or how)?
+    private String password;
 
     public User toUser(){
         User user = new User();
-
-        user.setFirst_name(this.getFirst_name());
-        user.setLast_name(this.getLast_name());
         user.setEmail(this.getEmail());
-        user.setPhoneNumber(this.getPhone());
         user.setPassword(this.getPassword());
 
         return user;
