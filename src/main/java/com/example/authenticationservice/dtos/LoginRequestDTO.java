@@ -9,12 +9,5 @@ import lombok.Setter;
 public class LoginRequestDTO {
     private String email;
     private String password;
-
-    public User toUser(){
-        User user = new User();
-        user.setEmail(this.getEmail());
-        user.setPassword(this.getPassword());
-
-        return user;
-    }
+    private String ipAddress;
 }

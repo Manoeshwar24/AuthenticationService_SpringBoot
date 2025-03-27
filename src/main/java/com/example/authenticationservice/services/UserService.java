@@ -1,26 +1,35 @@
 package com.example.authenticationservice.services;
 
+import com.example.authenticationservice.exceptions.TokenInvalidException;
 import com.example.authenticationservice.exceptions.UserAlreadyExistsException;
 import com.example.authenticationservice.exceptions.UserDoesNotExistException;
 import com.example.authenticationservice.exceptions.WrongPasswordException;
 import com.example.authenticationservice.models.User;
 import com.example.authenticationservice.repositories.UserRepository;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
 public class UserService {
     private UserRepository userRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
-    private SecretKey key = Jwts.SIG.HS256.key().build();
+    private JWTTokenService jwtTokenService;
+    private SessionService sessionService;
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
+                       JWTTokenService jwtTokenService, SessionService sessionService) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.jwtTokenService = jwtTokenService;
+        this.sessionService = sessionService;
     }
 
     public boolean signUpUser(User toBeCreatedUser) throws UserAlreadyExistsException {
@@ -28,24 +37,40 @@ public class UserService {
         if(userRepository.findByEmail(toBeCreatedUser.getEmail()).isPresent()){
             throw new UserAlreadyExistsException("User with mail '" + toBeCreatedUser.getEmail() + "' already exists!");
         }
-        //encrypt the password before saving in the DB
-        toBeCreatedUser.setPassword(bCryptPasswordEncoder.encode(toBeCreatedUser.getPassword()));
-        //persist the user data in the db
-        User createdUser = userRepository.save(toBeCreatedUser);
+
+        createNewUser(toBeCreatedUser);
         return true;
     }
 
-    public String loginUser(User userToLogin) throws UserDoesNotExistException, WrongPasswordException {
+    private void createNewUser(User toBeCreatedUser) {
+        //encrypt the password before saving in the DB
+        toBeCreatedUser.setPassword(bCryptPasswordEncoder.encode(toBeCreatedUser.getPassword()));
+
+        //update the created and updated at
+        toBeCreatedUser.setCreatedAt(LocalDateTime.now());
+        toBeCreatedUser.setUpdatedAt(LocalDateTime.now());
+
+        //persist the user data in the db
+        User createdUser = userRepository.save(toBeCreatedUser);
+    }
+
+    public String loginUser(String inputEmail, String inputPassword, String ipAddress)
+            throws UserDoesNotExistException, WrongPasswordException {
         //check if user exists in the DB
-        Optional<User> loggedInUser = userRepository.findByEmail(userToLogin.getEmail());
+        Optional<User> loggedInUser = userRepository.findByEmail(inputEmail);
         if(loggedInUser.isPresent()) {
-            //validate the password
+            //validate the inputPassword
             String dbPassword = loggedInUser.get().getPassword();
-            if(!bCryptPasswordEncoder.matches(userToLogin.getPassword(), dbPassword)){
+            if(!bCryptPasswordEncoder.matches(inputPassword, dbPassword)){
                 throw new WrongPasswordException("Password is wrong!");
             }
             else {
-                String jwtToken = createJWTToken(loggedInUser.get().getId(), loggedInUser.get().getEmail());
+                //check if token already exists for this ipAddress
+                String jwtToken = jwtTokenService.generateToken(loggedInUser.get().getId(), inputEmail, ipAddress);
+
+                //create a session in the DB for the current login
+                sessionService.createOrUpdateSession(loggedInUser.get(), ipAddress ,jwtToken);
+
                 return jwtToken;
             }
         }else {
@@ -53,24 +78,12 @@ public class UserService {
         }
     }
 
-    public String createJWTToken(long userId, String email) {
-        Map<String, Object> headerMap = new HashMap<String, Object>();
-        headerMap.put("userID", userId);
-        headerMap.put("email", email);
-        headerMap.put("role", "USER");
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, 30);
-        Date tokenExpirationDate = calendar.getTime();
-
-        String jwtToken = Jwts.builder()
-                .claims(headerMap)
-                .expiration(tokenExpirationDate)
-                .issuedAt(new Date())
-                .issuer("Eshwar_Dev")
-                .signWith(key)
-                .compact();
-
-        return jwtToken;
+    public String logoutOfAllDevices(String jwtToken) throws TokenInvalidException {
+        if(jwtTokenService.validateToken(jwtToken)){
+            return "Logged out of all devices!";
+        }
+        else{
+            throw new TokenInvalidException("Token is Invalid! Please login again.");
+        }
     }
 }
