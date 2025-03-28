@@ -6,10 +6,12 @@ REQUIREMENTS
 5.  Token should be valid for 30 days
 6.  Token should be refreshed upon every login
 7.  Users should be able to log out from all devices
-
 8.  Users should be able to log out from particular device
+
 9.  Users should not be allowed to have more than 2 sessions at a time
 10. Users should be able to change password
+11. BlackListing tokens on expiry and logout
+12. Implement OAuth2.0 and make this application as Authorization Server
 
 
 MODELS

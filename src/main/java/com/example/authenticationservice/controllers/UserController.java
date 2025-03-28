@@ -18,7 +18,7 @@ public class UserController {
         this.jwtTokenService = jwtTokenService;
     }
 
-    @PostMapping("/log_out")
+    @PostMapping("/log_out/all-devices")
     public ResponseEntity<LogOutResponseDTO> logoutOfAllDevices(@RequestHeader("Authorization") String authorizationHeader) {
         try {
             // Extract the JWT token from the "Authorization" header
@@ -34,4 +34,25 @@ public class UserController {
             return new ResponseEntity<>(logOutResponseDTO, HttpStatus.UNAUTHORIZED);
         }
     }
+
+    @PostMapping("log_out/current-device")
+    public ResponseEntity<LogOutResponseDTO> logOutOfSpecificDevice(@RequestHeader("Authorization") String authorizationHeader) {
+        try{
+            //extract the jwt Token from the authorization header
+            String jwtToken = authorizationHeader.replace("Bearer ", "");
+            //call the service to log out of the specific device
+            String responseMessage = userService.logoutOfSpecificDevice(jwtToken);
+
+            //create response DTO
+            LogOutResponseDTO logOutResponseDTO = new LogOutResponseDTO();
+            logOutResponseDTO.setResponseMessage(responseMessage);
+            return new ResponseEntity<>(logOutResponseDTO, HttpStatus.OK);
+        }
+        catch (Exception e){
+            LogOutResponseDTO logOutResponseDTO = new LogOutResponseDTO();
+            logOutResponseDTO.setResponseMessage("Cannot log out of the selected device");
+            return new ResponseEntity<>(logOutResponseDTO, HttpStatus.UNAUTHORIZED);
+        }
+    }
+
 }

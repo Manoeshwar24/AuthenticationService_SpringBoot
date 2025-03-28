@@ -47,7 +47,7 @@ public class SessionService {
         sessionRepository.save(newSession);
     }
 
-    public boolean isTokenActive(Long userID, String ipAddress) {
+    public boolean isTokenValid(Long userID, String ipAddress) {
 
         Optional<Session> dbSession = sessionRepository.findByUserIdAndIpAddress(userID, ipAddress);
         if (dbSession.isEmpty() || dbSession.get().getSessionStatus() != SessionStatus.ACTIVE ||
@@ -60,5 +60,9 @@ public class SessionService {
 
     public void endAllSessions(Long userID) {
         sessionRepository.endAllSessions(userID);
+    }
+
+    public void endCurrentSession(Long userID, String ipAddress) {
+        sessionRepository.endCurrentSession(userID, ipAddress);
     }
 }

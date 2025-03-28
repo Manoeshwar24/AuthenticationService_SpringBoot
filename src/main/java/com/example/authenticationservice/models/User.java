@@ -17,6 +17,6 @@ public class User extends BaseModel {
     private String email;
     private String password; //encrypted
 
-    @ManyToMany
+    @ManyToMany(fetch = jakarta.persistence.FetchType.EAGER)
     private List<Role> roles = new ArrayList<>();
 }

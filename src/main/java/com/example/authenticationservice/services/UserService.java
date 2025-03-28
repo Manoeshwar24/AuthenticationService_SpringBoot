@@ -79,10 +79,26 @@ public class UserService {
     }
 
     public String logoutOfAllDevices(String jwtToken) throws TokenInvalidException {
-        if(jwtTokenService.validateToken(jwtToken)){
-            return "Logged out of all devices!";
-        }
-        else{
+        return logout(jwtToken, true);
+    }
+
+    public String logoutOfSpecificDevice(String jwtToken) throws TokenInvalidException {
+        return logout(jwtToken, false);
+    }
+
+    private String logout(String jwtToken, boolean allDevices) throws TokenInvalidException {
+        Claims claims = jwtTokenService.parseToken(jwtToken);
+        Long userID = claims.get("userID", Long.class);
+        String ipAddress = claims.get("ipAddress", String.class);
+        if (jwtTokenService.validateToken(userID, ipAddress)) {
+            if (allDevices) {
+                sessionService.endAllSessions(userID);
+                return "Logged out of all devices!";
+            } else {
+                sessionService.endCurrentSession(userID, ipAddress);
+                return "Logged out of the device with IP address: " + ipAddress;
+            }
+        } else {
             throw new TokenInvalidException("Token is Invalid! Please login again.");
         }
     }

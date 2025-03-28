@@ -19,4 +19,9 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     @Transactional
     @Query("UPDATE Session s SET s.sessionStatus = 'ENDED' WHERE s.user.id = :userID")
     void endAllSessions(Long userID);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Session s SET s.sessionStatus = 'ENDED' WHERE s.user.id = :userID AND s.ipAddress = :ipAddress")
+    void endCurrentSession(Long userID, String ipAddress);
 }

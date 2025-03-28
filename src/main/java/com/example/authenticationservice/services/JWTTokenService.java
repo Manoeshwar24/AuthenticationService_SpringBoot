@@ -46,24 +46,19 @@ public class JWTTokenService {
         return jwtToken;
     }
 
-    public boolean validateToken(String jwtToken) throws TokenInvalidException{
+    public boolean validateToken(Long userID, String ipAddress){
+
+        //check if there is a session for the userID and ipAddress
+        //if yes, check if the session is active and the token is not expired
+        return sessionService.isTokenValid(userID, ipAddress);
+    }
+
+    public Claims parseToken(String jwtToken) {
         Jws<Claims> claims = Jwts.parser()
                 .verifyWith(jwtSecretKey)
                 .build()
                 .parseSignedClaims(jwtToken);
 
-        //get the user details from the token
-        String email = claims.getPayload().get("email", String.class);
-        Long userID = claims.getPayload().get("userID", Long.class);
-        String ipAddress = claims.getPayload().get("ipAddress", String.class);
-
-        //check if the session is ended or token is expired for the userID and ipAddress
-        if(sessionService.isTokenActive(userID, ipAddress)){
-            sessionService.endAllSessions(userID);
-
-            return true;
-        }
-
-        return false;
+        return claims.getPayload();
     }
 }
